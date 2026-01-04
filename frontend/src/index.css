@@ -1,0 +1,103 @@
+@import 'antd/dist/reset.css';
+
+:root {
+  --bg-color: #f8fafc; /* Slate 50 - 极简灰白背景 */
+  --sidebar-bg: #ffffff;
+  --primary-color: #4f46e5; /* Indigo 600 - 专业科技蓝 */
+  --text-primary: #1e293b; /* Slate 800 */
+  --text-secondary: #64748b; /* Slate 500 */
+  --border-color: #e2e8f0; /* Slate 200 */
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 极简卡片风格 */
+.clean-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.clean-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+  border-color: #cbd5e1;
+}
+
+/* 侧边栏样式 */
+.minimal-sider {
+  background: var(--sidebar-bg) !important;
+  border-right: 1px solid var(--border-color);
+}
+
+.ant-menu-light {
+  background: transparent !important;
+  border-inline-end: none !important;
+}
+
+.ant-menu-item-selected {
+  background-color: #eef2ff !important; /* Indigo 50 */
+  color: var(--primary-color) !important;
+  font-weight: 500;
+}
+
+/* 搜索框优化 */
+.minimal-input {
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.minimal-input:hover, .minimal-input:focus {
+  border-color: var(--primary-color);
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Ant Design 覆盖 */
+.ant-layout {
+  background: var(--bg-color) !important;
+}
+
+.ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+}
+
+.ant-typography {
+  color: var(--text-primary);
+}
+
+.ant-tag {
+  border: none;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.ant-tabs-nav::before {
+  border-bottom: 1px solid var(--border-color) !important;
+}
