@@ -5,7 +5,8 @@ import {
   FolderOpenOutlined, StarOutlined, MoreOutlined,
   EditOutlined, DeleteOutlined, HolderOutlined,
   FormOutlined, CodeOutlined, PictureOutlined, ToolOutlined, 
-  FileTextOutlined, BulbOutlined, RobotOutlined, CoffeeOutlined
+  FileTextOutlined, BulbOutlined, RobotOutlined, CoffeeOutlined,
+  SettingOutlined
 } from '@ant-design/icons';
 import {
   DndContext, 
@@ -132,7 +133,9 @@ const Sidebar = ({
   onDeleteCategory,
   onReorderCategories,
   showFavorites,
-  onToggleFavorites
+  onToggleFavorites,
+  showSettings,
+  onToggleSettings
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -178,15 +181,19 @@ const Sidebar = ({
 
       <Menu
         mode="inline"
-        selectedKeys={[showFavorites ? 'fav' : (selectedCategory && !selectedCategory.toString().startsWith('cat') ? 'none' : 'all')]}
+        selectedKeys={[
+          showSettings ? 'settings' : (showFavorites ? 'fav' : (selectedCategory && !selectedCategory.toString().startsWith('cat') ? 'none' : 'all'))
+        ]}
         style={{ border: 'none', padding: '0 8px' }}
         onClick={(e) => {
            if (e.key === 'fav') onToggleFavorites(true);
+           else if (e.key === 'settings') onToggleSettings();
            else if (e.key === 'all') { onToggleFavorites(false); onSelectCategory(null); }
         }}
         items={[
-          { key: 'all', icon: <AppstoreOutlined />, label: '全部项目', className: !selectedCategory && !showFavorites ? 'ant-menu-item-selected' : '' },
+          { key: 'all', icon: <AppstoreOutlined />, label: '全部项目', className: !selectedCategory && !showFavorites && !showSettings ? 'ant-menu-item-selected' : '' },
           { key: 'fav', icon: <StarOutlined />, label: '收藏夹' },
+          { key: 'settings', icon: <SettingOutlined />, label: '设置' },
         ]}
       />
 

@@ -6,6 +6,8 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
+import { aiApi } from '../api';
+
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
@@ -61,14 +63,18 @@ const Workshop = ({
     if (changed) setVariables(newVars);
   }, [promptInput]);
 
-  const handleOptimize = () => {
+  const handleOptimize = async () => {
     if (!promptInput) return;
     setIsOptimizing(true);
-    setTimeout(() => {
-      setOptimizedResult(`[AI 优化] ${promptInput}\n\n优化点:\n- 增加了角色设定\n- 明确了输出格式\n- 移除了模糊表述`);
-      setIsOptimizing(false);
+    try {
+      const res = await aiApi.optimize({ prompt: promptInput });
+      setOptimizedResult(res.optimized_prompt);
       message.success('优化完成');
-    }, 1200);
+    } catch (e) {
+      // Error is handled by api interceptor, but we can log or show specific hints
+    } finally {
+      setIsOptimizing(false);
+    }
   };
 
   const handleCopy = () => {
@@ -160,10 +166,11 @@ const Workshop = ({
         </div>
 
         {/* Right: Tabs */}
-        <div className="clean-card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div className="clean-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <Tabs 
             defaultActiveKey="1" 
             tabBarStyle={{ padding: '0 24px', margin: 0 }}
+            className="full-height-tabs"
             items={[
               {
                 key: '1',
@@ -171,7 +178,7 @@ const Workshop = ({
                 children: (
                   <div style={{ padding: 24, height: '100%', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
                     {previewResult ? (
-                      <div>
+                      <div style={{ flex: 1, overflowY: 'auto' }}>
                         <Tag color="green" style={{ marginBottom: 12 }}>预览模式</Tag>
                         <Paragraph style={{ whiteSpace: 'pre-wrap' }}>{previewResult}</Paragraph>
                       </div>
@@ -179,10 +186,12 @@ const Workshop = ({
                       <TextArea 
                         value={optimizedResult} 
                         readOnly 
-                        style={{ flex: 1, resize: 'none', border: 'none', padding: 0, fontSize: 15, lineHeight: 1.6, boxShadow: 'none', background: 'transparent' }} 
+                        style={{ height: '100%', resize: 'none', border: 'none', padding: 0, fontSize: 15, lineHeight: 1.6, boxShadow: 'none', background: 'transparent' }} 
                       />
                     ) : (
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无结果" style={{ marginTop: 60 }} />
+                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无结果" />
+                      </div>
                     )}
                   </div>
                 )

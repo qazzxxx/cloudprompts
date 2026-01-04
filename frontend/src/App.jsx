@@ -13,6 +13,7 @@ import 'dayjs/locale/zh-cn';
 import Sidebar from './components/Sidebar';
 import ProjectCard from './components/ProjectCard';
 import Workshop from './components/Workshop';
+import Settings from './components/Settings';
 import { projectsApi, categoriesApi } from './api';
 
 // Config
@@ -61,6 +62,7 @@ const App = () => {
   // --- UI State ---
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProject, setSelectedProject] = useState(null);
   const [versions, setVersions] = useState([]);
@@ -213,8 +215,10 @@ const App = () => {
           categories={categories}
           selectedCategory={selectedCategory}
           showFavorites={showFavorites}
-          onSelectCategory={(id) => { setSelectedCategory(id); setShowFavorites(false); setSelectedProject(null); }}
-          onToggleFavorites={(show) => { setShowFavorites(show); setSelectedCategory(null); setSelectedProject(null); }}
+          showSettings={showSettings}
+          onSelectCategory={(id) => { setSelectedCategory(id); setShowFavorites(false); setSelectedProject(null); setShowSettings(false); }}
+          onToggleFavorites={(show) => { setShowFavorites(show); setSelectedCategory(null); setSelectedProject(null); setShowSettings(false); }}
+          onToggleSettings={() => { setShowSettings(true); setShowFavorites(false); setSelectedCategory(null); setSelectedProject(null); }}
           onAddProject={openCreateProjectModal}
           onAddCategory={() => {
             setEditingCategory(null);
@@ -227,7 +231,9 @@ const App = () => {
         />
 
         <Layout style={{ marginLeft: 260, padding: '32px 40px', minHeight: '100vh' }}>
-          {selectedProject ? (
+          {showSettings ? (
+            <Settings />
+          ) : selectedProject ? (
             <Workshop 
               project={selectedProject}
               category={categories.find(c => c.id === selectedProject.category_id)}

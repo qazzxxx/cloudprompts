@@ -8,7 +8,8 @@ from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
 from contextlib import asynccontextmanager
-from models import Project, Version, Category
+from models import Project, Version, Category, AppSettings
+from openai import OpenAI
 
 # Database Setup
 if os.path.exists("/data"):
@@ -34,6 +35,11 @@ def create_db_and_tables():
             ]
             for c in default_cats:
                 session.add(c)
+            session.commit()
+            
+        # Ensure Settings exist
+        if not session.get(AppSettings, 1):
+            session.add(AppSettings(id=1))
             session.commit()
 
 def get_session():
@@ -200,6 +206,91 @@ def create_version(project_id: int, version: Version, session: Session = Depends
 def read_versions(project_id: int, session: Session = Depends(get_session)):
     versions = session.exec(select(Version).where(Version.project_id == project_id).order_by(Version.version_num.desc())).all()
     return versions
+
+# --- Settings Routes ---
+@app.get("/api/settings", response_model=AppSettings)
+def read_settings(session: Session = Depends(get_session)):
+    settings = session.get(AppSettings, 1)
+    if not settings:
+        # Should create if missing (though seeded at startup)
+        settings = AppSettings(id=1)
+        session.add(settings)
+        session.commit()
+        session.refresh(settings)
+    return settings
+
+@app.put("/api/settings", response_model=AppSettings)
+def update_settings(settings_data: AppSettings, session: Session = Depends(get_session)):
+    settings = session.get(AppSettings, 1)
+    if not settings:
+        settings = AppSettings(id=1)
+    
+    settings.openai_api_key = settings_data.openai_api_key
+    settings.openai_base_url = settings_data.openai_base_url
+    settings.openai_model = settings_data.openai_model
+    settings.provider = settings_data.provider
+    
+    session.add(settings)
+    session.commit()
+    session.refresh(settings)
+    return settings
+
+# --- AI Routes ---
+class OptimizeRequest(BaseModel):
+    prompt: str
+
+class OptimizeResponse(BaseModel):
+    optimized_prompt: str
+
+@app.post("/api/ai/optimize", response_model=OptimizeResponse)
+def optimize_prompt(request: OptimizeRequest, session: Session = Depends(get_session)):
+    settings = session.get(AppSettings, 1)
+    
+    if not settings or not settings.openai_api_key:
+        raise HTTPException(status_code=400, detail="请先在设置中配置 API Key")
+    
+    try:
+        client = OpenAI(
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_base_url,
+            timeout=50.0 # Set timeout to 50 seconds
+        )
+        
+        system_prompt = """你是一个专业的提示词工程师 (Prompt Engineer)。
+你的任务是优化用户提供的 Prompt，使其更加清晰、结构化，并能引导 AI 生成更高质量的结果。
+请保持原意不变，但进行以下改进：
+1. 明确角色设定 (Role)
+2. 补充背景信息 (Context)
+3. 细化任务描述 (Task)
+4. 规定输出格式 (Format)
+
+请直接输出优化后的 Prompt 内容，不要包含解释性文字。"""
+
+        # Use async compatible run or wrap in thread if library is sync only, 
+        # but standard OpenAI client is sync. FastAPI handles sync routes in threads.
+        # However, for better performance or if it blocks too long, we might want async client.
+        # For now, let's keep it sync but ensure it's defined as `def` not `async def` 
+        # if we are using the sync client to avoid blocking the event loop incorrectly if mixed.
+        # Wait, I see I defined it as `def` in the previous step, which is correct for sync calls in FastAPI.
+        # But if the user reports failure, maybe it's a timeout? 
+        # OpenAI calls can be slow.
+        
+        response = client.chat.completions.create(
+            model=settings.openai_model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": request.prompt}
+            ],
+            temperature=0.7,
+        )
+        
+        optimized_content = response.choices[0].message.content
+        return OptimizeResponse(optimized_prompt=optimized_content)
+        
+    except Exception as e:
+        # Log the full error for debugging
+        print(f"AI Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"AI 调用失败: {str(e)}")
 
 # SPA Static Files Hosting
 static_dir = os.path.join(os.path.dirname(__file__), "static")

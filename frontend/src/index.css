@@ -101,3 +101,20 @@ body {
 .ant-tabs-nav::before {
   border-bottom: 1px solid var(--border-color) !important;
 }
+
+/* Full height tabs fix */
+.full-height-tabs {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.full-height-tabs .ant-tabs-content-holder {
+  flex: 1;
+  overflow: hidden;
+}
+.full-height-tabs .ant-tabs-content {
+  height: 100%;
+}
+.full-height-tabs .ant-tabs-tabpane {
+  height: 100%;
+}

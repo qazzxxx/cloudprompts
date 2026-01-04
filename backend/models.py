@@ -34,3 +34,12 @@ class Version(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     project: Optional[Project] = Relationship(back_populates="versions")
+
+class AppSettings(SQLModel, table=True):
+    id: int = Field(default=1, primary_key=True)
+    openai_api_key: Optional[str] = None
+    openai_base_url: str = Field(default="https://api.openai.com/v1")
+    openai_model: str = Field(default="gpt-3.5-turbo")
+    
+    # We can add more fields later (e.g. for other providers)
+    provider: str = Field(default="openai") # openai, azure, anthropic, etc.

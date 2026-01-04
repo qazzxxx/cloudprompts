@@ -3,13 +3,15 @@ import { message } from 'antd';
 
 const api = axios.create({
   baseURL: '/api',
-  timeout: 10000,
+  timeout: 60000, // Increased timeout for AI requests
 });
 
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    message.error(error.response?.data?.detail || '网络请求失败');
+    console.error('API Error:', error);
+    const msg = error.response?.data?.detail || error.message || '网络请求失败';
+    message.error(msg);
     return Promise.reject(error);
   }
 );
@@ -31,4 +33,13 @@ export const categoriesApi = {
   update: (id, data) => api.put(`/categories/${id}`, data),
   delete: (id) => api.delete(`/categories/${id}`),
   reorder: (items) => api.put('/categories/reorder', items),
+};
+
+export const settingsApi = {
+  get: () => api.get('/settings'),
+  update: (data) => api.put('/settings', data),
+};
+
+export const aiApi = {
+  optimize: (data) => api.post('/ai/optimize', data),
 };
