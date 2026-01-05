@@ -1,11 +1,38 @@
 import React from 'react';
-import { Typography, Tag, Button,  Tooltip } from 'antd';
-import { CodeOutlined,CheckOutlined, StarFilled, StarOutlined } from '@ant-design/icons';
+import { Typography, Tag, Button,  Tooltip, Dropdown } from 'antd';
+import { 
+  CodeOutlined, CheckOutlined, StarFilled, StarOutlined, 
+  MoreOutlined, EditOutlined, DeleteOutlined, PictureOutlined, 
+  FileTextOutlined, CopyOutlined 
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { Title, Paragraph, Text } = Typography;
 
-const ProjectCard = ({ project, category, onClick, onToggleFavorite }) => {
+const ProjectCard = ({ project, category, onClick, onToggleFavorite, onCopyPrompt, onEdit, onDelete }) => {
+  
+  const menuItems = [
+    {
+      key: 'edit',
+      label: '编辑信息',
+      icon: <EditOutlined />,
+      onClick: (e) => {
+        e.domEvent.stopPropagation();
+        onEdit(project);
+      }
+    },
+    {
+      key: 'delete',
+      label: '删除项目',
+      icon: <DeleteOutlined />,
+      danger: true,
+      onClick: (e) => {
+        e.domEvent.stopPropagation();
+        onDelete(project.id);
+      }
+    }
+  ];
+
   return (
     <div 
       className="clean-card" 
@@ -21,28 +48,57 @@ const ProjectCard = ({ project, category, onClick, onToggleFavorite }) => {
         overflow: 'hidden'
       }}
     >
-      {/* 收藏按钮 - 移到右上角并增大点击区域 */}
-      <div 
-        style={{ 
-          position: 'absolute', 
-          top: 0, 
-          right: 0, 
-          padding: '16px',
-          zIndex: 10,
-          transition: 'transform 0.2s'
+      {/* Actions - Top Right */}
+      <div
+        style={{
+            position: 'absolute',
+            top: 16,
+            right: 12,
+            zIndex: 11,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4
         }}
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggleFavorite(project.id);
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        onClick={(e) => e.stopPropagation()}
       >
-        {project.is_favorite ? (
-          <StarFilled style={{ color: '#f59e0b', fontSize: 20 }} />
-        ) : (
-          <StarOutlined style={{ color: '#cbd5e1', fontSize: 20 }} />
-        )}
+         <div 
+            onClick={(e) => {
+              e.stopPropagation();
+              onCopyPrompt(project.id);
+            }}
+            style={{ 
+              cursor: 'pointer', 
+              display: 'flex', 
+              padding: '8px',
+              borderRadius: '8px',
+              transition: 'background 0.2s'
+            }}
+            className="hover-bg"
+            title="复制最新版本提示词"
+        >
+            <CopyOutlined style={{ color: 'var(--text-secondary)', fontSize: 18 }} />
+        </div>
+        <div 
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite(project.id);
+            }}
+            style={{ 
+              cursor: 'pointer', 
+              display: 'flex', 
+              padding: '8px',
+              borderRadius: '8px',
+              transition: 'background 0.2s'
+            }}
+            className="hover-bg"
+            title={project.is_favorite ? "取消收藏" : "收藏"}
+        >
+            {project.is_favorite ? (
+              <StarFilled style={{ color: '#f59e0b', fontSize: 18 }} />
+            ) : (
+              <StarOutlined style={{ color: 'var(--text-secondary)', fontSize: 18 }} />
+            )}
+        </div>
       </div>
 
       <div>
@@ -50,22 +106,22 @@ const ProjectCard = ({ project, category, onClick, onToggleFavorite }) => {
           <div style={{ 
             width: 44, 
             height: 44, 
-            background: '#f1f5f9', 
+            background: project.type === 'image' ? 'var(--tag-bg)' : 'var(--bg-color)', 
             borderRadius: '10px', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
-            color: '#4f46e5',
+            color: project.type === 'image' ? '#d946ef' : 'var(--primary-color)',
             flexShrink: 0
           }}>
-            <CodeOutlined style={{ fontSize: 22 }} />
+            {project.type === 'image' ? <PictureOutlined style={{ fontSize: 22 }} /> : <CodeOutlined style={{ fontSize: 22 }} />}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <Title level={5} style={{ margin: 0, fontSize: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ flex: 1, minWidth: 0, marginRight: 80 }}> {/* Increased margin to avoid overlap with top-right icons */}
+            <Title level={5} style={{ margin: 0, fontSize: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>
               {project.name}
             </Title>
             {category && (
-              <Tag bordered={false} style={{ margin: '4px 0 0 0', fontSize: 11, background: '#eef2ff', color: '#4f46e5' }}>
+              <Tag bordered={false} style={{ margin: '4px 0 0 0', fontSize: 11, background: 'var(--tag-bg)', color: 'var(--primary-color)' }}>
                 {category.name}
               </Tag>
             )}
@@ -73,9 +129,8 @@ const ProjectCard = ({ project, category, onClick, onToggleFavorite }) => {
         </div>
         
         <Paragraph 
-          type="secondary" 
           ellipsis={{ rows: 2 }} 
-          style={{ fontSize: 13, marginBottom: 0, lineHeight: '1.6', color: '#64748b' }}
+          style={{ fontSize: 13, marginBottom: 0, lineHeight: '1.6', color: 'var(--text-secondary)' }}
         >
           {project.description || '暂无描述'}
         </Paragraph>
@@ -86,25 +141,21 @@ const ProjectCard = ({ project, category, onClick, onToggleFavorite }) => {
         justifyContent: 'space-between', 
         alignItems: 'center', 
         paddingTop: 16,
-        borderTop: '1px solid #f1f5f9'
+        borderTop: '1px solid var(--border-color)'
       }}>
-        <Text type="secondary" style={{ fontSize: 12, color: '#94a3b8' }}>
+        <Text style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
           {dayjs(project.updated_at).fromNow()}
         </Text>
-        <Button 
-          type="link" 
-          size="small" 
-          style={{ 
-            padding: 0, 
-            fontSize: 13, 
-            fontWeight: 500,
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
-          详情 <CheckOutlined style={{ fontSize: 10, marginLeft: 4, display: 'none' }} /> 
-          <span style={{ marginLeft: 2 }}>→</span>
-        </Button>
+        <div onClick={(e) => e.stopPropagation()}>
+          <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={['click']}>
+            <Button 
+              type="text" 
+              size="small"
+              icon={<MoreOutlined style={{ fontSize: 18, color: 'var(--text-secondary)' }} />} 
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            />
+          </Dropdown>
+        </div>
       </div>
     </div>
   );

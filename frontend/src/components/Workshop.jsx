@@ -23,30 +23,10 @@ const { Option } = Select;
 
 // Highlighter for {{variables}} combined with Markdown
 const highlightWithVariables = (code) => {
-  // First, let Prism highlight the Markdown
   const prismHtml = highlight(code, languages.markdown, 'markdown');
   
-  // Then manually replace {{variable}} patterns in the HTML string with our styled span
-  // Note: This is a bit hacky because {{...}} might be split by Prism tags if we are unlucky,
-  // but usually {{Variable}} is treated as text.
-  // A safer way is to tokenize first, but simple string replacement on the output often works for simple cases.
-  // However, replacing inside HTML string is risky.
-  
-  // Alternative: Tokenize with Prism, then iterate tokens.
-  // But Prism's tokenize returns a nested structure.
-  
-  // Let's stick to the user's request: "Prompt Editor (support syntax highlighting)"
-  // Usually prompts are Markdown-ish.
-  
-  // If we want to support BOTH Markdown AND Variables, we can use a custom grammar or post-process.
-  // Let's try post-processing the prism output. 
-  // We need to match {{...}} that are NOT inside HTML tags.
-  
-  // Simple regex replace on the HTML might break if {{ is part of a tag, but it won't be in Prism output.
-  // Prism output contains <span class="...">...</span>.
-  
   return prismHtml.replace(/\{\{([^}]+)\}\}/g, (match) => {
-      return `<span style="color: #4f46e5; font-weight: 600; background: #e0e7ff; border-radius: 4px; padding: 0 2px;">${match}</span>`;
+      return `<span style="color: var(--primary-color); font-weight: 600; background: var(--tag-bg); border-radius: 4px; padding: 0 2px;">${match}</span>`;
   });
 };
 
@@ -54,6 +34,7 @@ const Workshop = ({
   project, 
   category, 
   versions, 
+  isDarkMode,
   onBack, 
   onSaveVersion, 
   onDeleteProject 
@@ -66,9 +47,8 @@ const Workshop = ({
   const [runResult, setRunResult] = useState(null); 
   const [copied, setCopied] = useState(false);
   const [mode, setMode] = useState(project.type || 'text'); 
-  const [selectedModel, setSelectedModel] = useState(null);
-  const [availableModels, setAvailableModels] = useState([]);
-  
+  // Removed selectedModel and availableModels as running is disabled
+
   // Diff & Rollback State
   const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
   const [diffVersion, setDiffVersion] = useState(null);
@@ -79,25 +59,6 @@ const Workshop = ({
   // Variables State
   const [variables, setVariables] = useState({});
   const [previewResult, setPreviewResult] = useState('');
-
-  // Load Settings for Models
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
-    try {
-      const s = await settingsApi.get();
-      // Parse available_models if it's string (should be list from backend now)
-      let models = s.available_models || [];
-      // Fallback if empty
-      if (models.length === 0) models = ['gpt-3.5-turbo', 'gpt-4', 'dall-e-3'];
-      setAvailableModels(models);
-      setSelectedModel(s.openai_model || models[0]);
-    } catch (e) {
-      setAvailableModels(['gpt-3.5-turbo', 'gpt-4', 'dall-e-3']);
-    }
-  };
 
   // Init
   useEffect(() => {
@@ -145,34 +106,6 @@ const Workshop = ({
       // Error is handled by api interceptor, but we can log or show specific hints
     } finally {
       setIsOptimizing(false);
-    }
-  };
-
-  const handleRunAI = async () => {
-    let finalPrompt = promptInput;
-    // Replace variables
-    Object.keys(variables).forEach(key => {
-      finalPrompt = finalPrompt.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), variables[key] || '');
-    });
-
-    if (!finalPrompt) return;
-
-    setIsRunning(true);
-    setRunResult(null);
-    try {
-      const res = await aiApi.run({
-        prompt: finalPrompt,
-        negative_prompt: negativePrompt,
-        type: mode,
-        model: selectedModel,
-        parameters: {} // Can add UI for params later
-      });
-      setRunResult({ type: mode, content: res.result });
-      message.success('执行完成');
-    } catch (e) {
-      // Handled
-    } finally {
-      setIsRunning(false);
     }
   };
 
@@ -224,11 +157,11 @@ const Workshop = ({
       {/* Header */}
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Button icon={<LeftOutlined />} type="text" onClick={onBack} style={{ color: '#64748b' }} />
+          <Button icon={<LeftOutlined />} type="text" onClick={onBack} style={{ color: 'var(--text-secondary)' }} />
           <Breadcrumb 
             items={[
-              { title: <span style={{ cursor: 'pointer' }} onClick={onBack}>项目库</span> },
-              { title: project.name }
+              { title: <span style={{ cursor: 'pointer', color: 'var(--text-secondary)' }} onClick={onBack}>项目库</span> },
+              { title: <span style={{ color: 'var(--text-primary)' }}>{project.name}</span> }
             ]} 
           />
         </div>
@@ -239,11 +172,11 @@ const Workshop = ({
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 32 }}>
         <div>
-          <Title level={2} style={{ margin: '0 0 8px 0', fontWeight: 600 }}>{project.name}</Title>
-          <Text type="secondary" style={{ fontSize: 15 }}>{project.description || '暂无描述'}</Text>
+          <Title level={2} style={{ margin: '0 0 8px 0', fontWeight: 600, color: 'var(--text-primary)' }}>{project.name}</Title>
+          <Text style={{ fontSize: 15, color: 'var(--text-secondary)' }}>{project.description || '暂无描述'}</Text>
           <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
             <Tag color="purple">{category?.name}</Tag>
-            {project.tags.map(t => <Tag key={t} bordered={false} style={{ background: '#f1f5f9', color: '#475569' }}>#{t}</Tag>)}
+            {project.tags.map(t => <Tag key={t} bordered={false} style={{ background: 'var(--bg-color)', color: 'var(--text-secondary)' }}>#{t}</Tag>)}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
@@ -277,63 +210,57 @@ const Workshop = ({
               </Button>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <Select 
-                 size="small" 
-                 style={{ width: 140 }} 
-                 value={selectedModel} 
-                 onChange={setSelectedModel}
-                 placeholder="选择模型"
-              >
-                 {availableModels.map(m => <Option key={m} value={m}>{m}</Option>)}
-              </Select>
               <Button type="primary" size="small" ghost icon={<RobotOutlined />} loading={isOptimizing} onClick={handleOptimize}>AI 优化</Button>
-              <Button type="primary" size="small" icon={<PlayCircleOutlined />} loading={isRunning} onClick={handleRunAI}>运行</Button>
             </div>
           </div>
-          <div style={{ border: '1px solid #d9d9d9', borderRadius: 6, padding: 5, flex: 1, overflow: 'auto', backgroundColor: '#fff' }}>
+          <div style={{ border: '1px solid var(--border-color)', borderRadius: 6, padding: 5, flex: 1, overflow: 'auto', backgroundColor: 'var(--input-bg)' }}>
             <Editor
               value={promptInput}
               onValueChange={code => setPromptInput(code)}
               highlight={highlightWithVariables}
               padding={10}
               placeholder="输入提示词... 使用 {{variable}} 定义变量"
+              className="npm-editor"
               style={{
                 fontFamily: '"Fira code", "Fira Mono", monospace',
                 fontSize: 15,
                 minHeight: '100%',
                 outline: 'none',
+                color: 'var(--text-primary)'
               }}
               textareaClassName="focus:outline-none" 
             />
           </div>
 
           {mode === 'image' && (
-             <div style={{ marginTop: 16, borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
-                <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>反向提示词 (Negative Prompt)</Text>
+             <div style={{ marginTop: 16, borderTop: '1px solid var(--border-color)', paddingTop: 16 }}>
+                <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 8, color: 'var(--text-primary)' }}>反向提示词 (Negative Prompt)</Text>
                 <TextArea 
                   value={negativePrompt}
                   onChange={(e) => setNegativePrompt(e.target.value)}
                   autoSize={{ minRows: 2, maxRows: 4 }}
                   placeholder="不想看到的元素..."
+                  style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
                 />
              </div>
           )}
           
           {/* Variables Panel */}
           {Object.keys(variables).length > 0 && (
-            <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid #f1f5f9' }}>
+            <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border-color)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                <Text strong style={{ fontSize: 13 }}>变量测试</Text>
+                <Text strong style={{ fontSize: 13, color: 'var(--text-primary)' }}>变量测试</Text>
                 <Button type="dashed" size="small" icon={<PlayCircleOutlined />} onClick={handleTestRun}>生成预览</Button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 {Object.keys(variables).map(v => (
                   <Input 
                     key={v} 
-                    addonBefore={v} 
+                    addonBefore={<span style={{ color: 'var(--text-secondary)' }}>{v}</span>} 
                     value={variables[v]} 
                     onChange={e => setVariables({...variables, [v]: e.target.value})}
                     size="small"
+                    style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-primary)' }}
                   />
                 ))}
               </div>
@@ -353,22 +280,7 @@ const Workshop = ({
                 label: '预览/结果',
                 children: (
                   <div style={{ padding: 24, height: '100%', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-                    {runResult ? (
-                      <div style={{ flex: 1, overflowY: 'auto' }}>
-                        <Tag color="blue" style={{ marginBottom: 12 }}>运行结果</Tag>
-                        {runResult.type === 'image' ? (
-                          <div style={{ textAlign: 'center' }}>
-                            <img src={runResult.content} alt="Generated" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: 8 }} />
-                          </div>
-                        ) : (
-                          <div className="markdown-body">
-                            <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
-                              {runResult.content}
-                            </ReactMarkdown>
-                          </div>
-                        )}
-                      </div>
-                    ) : previewResult ? (
+                    {previewResult ? (
                       <div style={{ flex: 1, overflowY: 'auto' }}>
                         <Tag color="green" style={{ marginBottom: 12 }}>变量预览</Tag>
                         <div className="markdown-body">
@@ -401,17 +313,17 @@ const Workshop = ({
                   <div style={{ padding: 24, overflowY: 'auto', height: '100%' }}>
                     <Timeline
                       items={versions.map(v => ({
-                        color: '#4f46e5',
+                        color: 'var(--primary-color)',
                         children: (
                           <div style={{ paddingBottom: 20 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                              <Text strong>v{v.version_num}</Text>
+                              <Text strong style={{ color: 'var(--text-primary)' }}>v{v.version_num}</Text>
                               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                <Text type="secondary" style={{ fontSize: 12 }}>{dayjs(v.created_at).format('MM-DD HH:mm')}</Text>
+                                <Text style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{dayjs(v.created_at).format('MM-DD HH:mm')}</Text>
                                 <Button 
                                   type="text" 
                                   size="small" 
-                                  icon={<DiffOutlined />} 
+                                  icon={<DiffOutlined style={{ color: 'var(--text-secondary)' }} />} 
                                   title="对比当前内容"
                                   onClick={() => {
                                     setDiffVersion(v);
@@ -421,7 +333,7 @@ const Workshop = ({
                                 <Button 
                                   type="text" 
                                   size="small" 
-                                  icon={<UndoOutlined />} 
+                                  icon={<UndoOutlined style={{ color: 'var(--text-secondary)' }} />} 
                                   title="恢复此版本"
                                   onClick={() => {
                                     setPromptInput(v.content);
@@ -432,12 +344,8 @@ const Workshop = ({
                               </div>
                             </div>
                             <div 
-                              style={{ background: '#f8fafc', padding: 12, borderRadius: 8, fontSize: 13, color: '#334155', cursor: 'pointer' }}
-                              onClick={() => {
-                                // Default click action: just view? Or maybe removed now that we have explicit buttons.
-                                // Let's keep it as "Copy to editor" or "Preview"
-                                // For now, let's just do nothing on click since we have explicit buttons, to avoid confusion.
-                              }}
+                              style={{ background: 'var(--bg-color)', padding: 12, borderRadius: 8, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer', border: '1px solid var(--border-color)' }}
+                              onClick={() => {}}
                             >
                               {v.content}
                             </div>
@@ -468,6 +376,7 @@ const Workshop = ({
               newValue={promptInput}
               splitView={true}
               compareMethod={DiffMethod.WORDS}
+              useDarkTheme={isDarkMode}
               styles={{
                 variables: {
                   light: {
@@ -479,6 +388,16 @@ const Workshop = ({
                     removedColor: '#24292e',
                     wordAddedBackground: '#acf2bd',
                     wordRemovedBackground: '#fdb8c0',
+                  },
+                  dark: {
+                    diffViewerBackground: '#0f172a',
+                    diffViewerTitleBackground: '#1e293b',
+                    addedBackground: '#064e3b',
+                    addedColor: '#ecfdf5',
+                    removedBackground: '#7f1d1d',
+                    removedColor: '#fef2f2',
+                    wordAddedBackground: '#059669',
+                    wordRemovedBackground: '#dc2626',
                   }
                 }
               }}

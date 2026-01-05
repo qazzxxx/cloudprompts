@@ -132,7 +132,12 @@ def read_projects(
     if is_favorite is not None:
         query = query.where(Project.is_favorite == is_favorite)
     if search:
-        query = query.where(Project.name.contains(search) | Project.description.contains(search))
+        # Search in name, description, and versions content
+        query = query.outerjoin(Version).where(
+            Project.name.contains(search) | 
+            Project.description.contains(search) |
+            Version.content.contains(search)
+        ).distinct()
     
     projects = session.exec(query).all()
     return projects
@@ -306,6 +311,80 @@ def run_ai(request: RunRequest, session: Session = Depends(get_session)):
         print(f"AI Run Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"执行失败: {str(e)}")
 
+import json
+from pydantic import BaseModel, ValidationError
+
+class AnalyzeRequest(BaseModel):
+    prompt: str
+
+class AnalyzeResponse(BaseModel):
+    name: str
+    description: str
+    tags: List[str]
+    type: str # text, image
+    category_suggested: str
+
+@app.post("/api/ai/analyze", response_model=AnalyzeResponse)
+def analyze_prompt(request: AnalyzeRequest, session: Session = Depends(get_session)):
+    settings = session.get(AppSettings, 1)
+    if not settings or not settings.openai_api_key:
+        raise HTTPException(status_code=400, detail="请先在设置中配置 API Key")
+
+    try:
+        client = OpenAI(
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_base_url,
+            timeout=30.0
+        )
+        
+        # Get existing categories for better suggestion
+        categories = session.exec(select(Category.name)).all()
+        cat_str = ", ".join(categories)
+
+        system_prompt = f"""
+        Analyze the user's prompt and extract structured metadata in valid JSON format.
+        Fields:
+        - name: A short, catchy title (max 20 chars).
+        - description: A brief summary of what this prompt does (max 100 chars).
+        - tags: A list of 1-3 keywords.
+        - type: 'text' (for LLM/ChatGPT prompts) or 'image' (for Midjourney/Stable Diffusion prompts).
+        - category_suggested: Choose the best fit from: [{cat_str}]. If none fit well, use '通用'.
+        
+        Output strictly JSON. No markdown code blocks.
+        """
+
+        response = client.chat.completions.create(
+            model=settings.openai_model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": request.prompt}
+            ],
+            temperature=0.3,
+            response_format={"type": "json_object"} # Force JSON if model supports it
+        )
+        
+        content = response.choices[0].message.content
+        data = json.loads(content)
+        
+        return AnalyzeResponse(
+            name=data.get("name", "New Project"),
+            description=data.get("description", ""),
+            tags=data.get("tags", []),
+            type=data.get("type", "text"),
+            category_suggested=data.get("category_suggested", "通用")
+        )
+
+    except Exception as e:
+        print(f"AI Analyze Error: {str(e)}")
+        # Fallback if AI fails
+        return AnalyzeResponse(
+            name="New Project",
+            description="",
+            tags=[],
+            type="text",
+            category_suggested="通用"
+        )
+
 @app.post("/api/ai/optimize", response_model=OptimizeResponse)
 def optimize_prompt(request: OptimizeRequest, session: Session = Depends(get_session)):
     settings = session.get(AppSettings, 1)
@@ -317,7 +396,7 @@ def optimize_prompt(request: OptimizeRequest, session: Session = Depends(get_ses
         client = OpenAI(
             api_key=settings.openai_api_key,
             base_url=settings.openai_base_url,
-            timeout=50.0 # Set timeout to 50 seconds
+            timeout=300.0 # Increased timeout to 300 seconds
         )
         
         system_prompt = settings.optimize_prompt_template or """你是一个专业的提示词工程师 (Prompt Engineer)。
@@ -346,6 +425,7 @@ def optimize_prompt(request: OptimizeRequest, session: Session = Depends(get_ses
                 {"role": "user", "content": request.prompt}
             ],
             temperature=0.7,
+            stream=False, # Ensure no streaming
         )
         
         optimized_content = response.choices[0].message.content

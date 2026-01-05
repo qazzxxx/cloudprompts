@@ -6,8 +6,9 @@ import {
   EditOutlined, DeleteOutlined, HolderOutlined,
   FormOutlined, CodeOutlined, PictureOutlined, ToolOutlined, 
   FileTextOutlined, BulbOutlined, RobotOutlined, CoffeeOutlined,
-  SettingOutlined
+  SettingOutlined, SunOutlined, MoonOutlined
 } from '@ant-design/icons';
+import { Switch } from 'antd';
 import {
   DndContext, 
   closestCenter,
@@ -38,7 +39,7 @@ const ICON_MAP = {
   coffee: <CoffeeOutlined />,
 };
 
-const SortableCategoryItem = ({ category, selected, onSelect, onEdit, onDelete }) => {
+const SortableCategoryItem = ({ category, selected, onSelect, onEdit, onDelete, isDarkMode }) => {
   const {
     attributes,
     listeners,
@@ -63,8 +64,8 @@ const SortableCategoryItem = ({ category, selected, onSelect, onEdit, onDelete }
     alignItems: 'center',
     justifyContent: 'space-between',
     cursor: 'pointer',
-    backgroundColor: selected ? '#eef2ff' : 'transparent',
-    color: selected ? '#4f46e5' : 'rgba(0, 0, 0, 0.88)',
+    backgroundColor: selected ? 'var(--menu-selected-bg)' : 'transparent',
+    color: selected ? 'var(--primary-color)' : 'var(--text-primary)',
   };
 
   const IconComponent = ICON_MAP[category.icon] || <FolderOpenOutlined />;
@@ -91,7 +92,7 @@ const SortableCategoryItem = ({ category, selected, onSelect, onEdit, onDelete }
           <div 
             {...attributes} 
             {...listeners} 
-            style={{ cursor: 'grab', color: '#cbd5e1', display: 'flex', alignItems: 'center', padding: 4 }} 
+            style={{ cursor: 'grab', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', padding: 4 }} 
             onClick={e => e.stopPropagation()}
           >
              <HolderOutlined />
@@ -115,7 +116,7 @@ const SortableCategoryItem = ({ category, selected, onSelect, onEdit, onDelete }
         }}
         trigger={['click']}
       >
-        <div onClick={(e) => e.stopPropagation()} style={{ padding: '4px 8px', cursor: 'pointer', color: '#94a3b8', display: 'flex' }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ padding: '4px 8px', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex' }}>
           <MoreOutlined />
         </div>
       </Dropdown>
@@ -135,7 +136,9 @@ const Sidebar = ({
   showFavorites,
   onToggleFavorites,
   showSettings,
-  onToggleSettings
+  onToggleSettings,
+  isDarkMode,
+  setIsDarkMode
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -165,12 +168,12 @@ const Sidebar = ({
   };
 
   return (
-    <Sider width={260} className="minimal-sider" theme="light" style={{ position: 'fixed', height: '100vh', left: 0, top: 0, zIndex: 10, borderRight: '1px solid #f1f5f9' }}>
+    <Sider width={260} className="minimal-sider" theme={isDarkMode ? 'dark' : 'light'} style={{ position: 'fixed', height: '100vh', left: 0, top: 0, zIndex: 10 }}>
       <div style={{ padding: '24px 24px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 32, height: 32, background: '#4f46e5', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+        <div style={{ width: 32, height: 32, background: 'var(--primary-color)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
           <RocketOutlined style={{ fontSize: 18 }} />
         </div>
-        <Text strong style={{ fontSize: 16, color: '#0f172a' }}>PromptBox</Text>
+        <Text strong style={{ fontSize: 16, color: 'var(--text-primary)' }}>云词</Text>
       </div>
       
       <div style={{ padding: '12px 20px' }}>
@@ -181,10 +184,11 @@ const Sidebar = ({
 
       <Menu
         mode="inline"
+        theme={isDarkMode ? 'dark' : 'light'}
         selectedKeys={[
           showSettings ? 'settings' : (showFavorites ? 'fav' : (selectedCategory && !selectedCategory.toString().startsWith('cat') ? 'none' : 'all'))
         ]}
-        style={{ border: 'none', padding: '0 8px' }}
+        style={{ border: 'none', padding: '0 8px', background: 'transparent' }}
         onClick={(e) => {
            if (e.key === 'fav') onToggleFavorites(true);
            else if (e.key === 'settings') onToggleSettings();
@@ -197,7 +201,7 @@ const Sidebar = ({
         ]}
       />
 
-      <div style={{ padding: '16px 24px 8px', fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>
+      <div style={{ padding: '16px 24px 8px', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>
         分类库
       </div>
 
@@ -215,6 +219,7 @@ const Sidebar = ({
               <SortableCategoryItem
                 key={category.id}
                 category={category}
+                isDarkMode={isDarkMode}
                 selected={selectedCategory === category.id && !showFavorites}
                 onSelect={onSelectCategory}
                 onEdit={onEditCategory}
@@ -228,14 +233,29 @@ const Sidebar = ({
           onClick={onAddCategory}
           style={{ 
              padding: '0 12px', height: 40, display: 'flex', alignItems: 'center', gap: 10,
-             cursor: 'pointer', margin: '4px 8px', borderRadius: 8, color: '#64748b', fontSize: 14
+             cursor: 'pointer', margin: '4px 8px', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 14
           }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)'}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--menu-selected-bg)'}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
           <PlusOutlined style={{ fontSize: 14 }} />
           <span>新建分类</span>
         </div>
+      </div>
+
+      {/* Theme Toggle */}
+      <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)' }}>
+          {isDarkMode ? <MoonOutlined /> : <SunOutlined />}
+          <Text size="small" style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+            {isDarkMode ? '深色模式' : '浅色模式'}
+          </Text>
+        </div>
+        <Switch 
+          checked={isDarkMode} 
+          onChange={setIsDarkMode} 
+          size="small"
+        />
       </div>
     </Sider>
   );

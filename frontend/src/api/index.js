@@ -3,7 +3,7 @@ import { message } from 'antd';
 
 const api = axios.create({
   baseURL: '/api',
-  timeout: 60000, // Increased timeout for AI requests
+  timeout: 180000, // Increased timeout to 180s (3 mins) to be safe
 });
 
 api.interceptors.response.use(
@@ -42,5 +42,6 @@ export const settingsApi = {
 
 export const aiApi = {
   optimize: (data) => api.post('/ai/optimize', data),
-  run: (data) => api.post('/ai/run', data),
+  analyze: (data) => api.post('/ai/analyze', data),
+  // run: (data) => api.post('/ai/run', data), // Disabled per user request
 };

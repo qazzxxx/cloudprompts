@@ -47,23 +47,23 @@ const Settings = () => {
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', width: '100%' }}>
       <div style={{ marginBottom: 24 }}>
-        <Title level={2} style={{ fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <Title level={2} style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 12 }}>
           <SettingOutlined /> 设置
         </Title>
       </div>
 
-      <Layout style={{ background: '#fff', borderRadius: 8, overflow: 'hidden', border: '1px solid #e2e8f0', minHeight: 600 }}>
-        <Sider width={240} theme="light" style={{ borderRight: '1px solid #f0f0f0' }}>
+      <Layout style={{ background: 'var(--card-bg)', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border-color)', minHeight: 600 }}>
+        <Sider width={240} theme="light" style={{ borderRight: '1px solid var(--border-color)', background: 'var(--card-bg)' }}>
           <Menu
             mode="inline"
             selectedKeys={[activeKey]}
             onClick={({ key }) => setActiveKey(key)}
-            style={{ border: 'none', height: '100%' }}
+            style={{ border: 'none', height: '100%', background: 'var(--card-bg)' }}
             items={menuItems}
           />
         </Sider>
         
-        <Content style={{ padding: '32px 40px', background: '#fff' }}>
+        <Content style={{ padding: '32px 40px', background: 'var(--card-bg)' }}>
           <Form
             form={form}
             layout="vertical"
