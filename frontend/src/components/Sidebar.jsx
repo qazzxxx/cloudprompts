@@ -169,11 +169,36 @@ const Sidebar = ({
 
   return (
     <Sider width={260} className="minimal-sider" theme={isDarkMode ? 'dark' : 'light'} style={{ position: 'fixed', height: '100vh', left: 0, top: 0, zIndex: 10 }}>
-      <div style={{ padding: '24px 24px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 32, height: 32, background: 'var(--primary-color)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-          <RocketOutlined style={{ fontSize: 18 }} />
+      <div style={{ padding: '32px 24px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ 
+          width: 36, 
+          height: 36, 
+          background: 'linear-gradient(135deg, var(--primary-color) 0%, #818cf8 100%)', 
+          borderRadius: 10, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          color: '#fff',
+          boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)',
+          flexShrink: 0
+        }}>
+          <RocketOutlined style={{ fontSize: 20 }} />
         </div>
-        <Text strong style={{ fontSize: 16, color: 'var(--text-primary)' }}>云词</Text>
+        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+          <Text strong style={{ 
+            fontSize: 18, 
+            color: 'var(--text-primary)', 
+            letterSpacing: '0.5px',
+            fontWeight: 700
+          }}>云词</Text>
+          <Text type="secondary" style={{ 
+            fontSize: 10, 
+            textTransform: 'uppercase', 
+            letterSpacing: '1.2px', 
+            fontWeight: 500,
+            opacity: 0.6
+          }}>Cloud Prompts</Text>
+        </div>
       </div>
       
       <div style={{ padding: '12px 20px' }}>
