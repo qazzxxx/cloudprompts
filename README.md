@@ -74,6 +74,3 @@ cloudprompts/
 └── README.md
 ```
 
-## 📄 开源协议
-
-[MIT License](LICENSE)
