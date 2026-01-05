@@ -1,6 +1,6 @@
 services:
   cloudprompts:
-    build: .
+    image: ghcr.io/qazzxxx/cloudprompts:latest
     ports:
       - "8000:8000"
     volumes:

@@ -26,15 +26,28 @@
 - **AI 集成**: OpenAI SDK (兼容各类 OpenAI 格式接口)
 - **环境**: Python 3.8+
 
-## 🚀 快速开始
+## 🐳 Docker 部署
 
-### 1. 克隆项目
+项目支持使用 Docker 一键部署，前后端已打包在同一个容器中。
+
+```bash
+# 使用 Docker Compose 启动
+docker-compose up -d
+```
+
+访问 [http://localhost:8000](http://localhost:8000) 即可使用。默认使用 GitHub Container Registry 上的最新镜像。
+
+## 🤖 CI/CD
+
+### 3. 手动安装与启动 (开发模式)
+
+#### 3.1 克隆项目
 ```bash
 git clone <repository-url>
 cd cloudprompts
 ```
 
-### 2. 后端配置与启动
+#### 3.2 后端配置与启动
 ```bash
 cd backend
 # 创建虚拟环境
@@ -46,7 +59,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-### 3. 前端配置与启动
+#### 3.3 前端配置与启动
 ```bash
 cd frontend
 # 安装依赖
