@@ -94,12 +94,12 @@ const LockScreen = ({ onUnlock }) => {
                     <LockOutlined style={{ fontSize: 36, color: 'white' }} />
                 </div>
 
-                <Title level={3} style={{ color: '#fff', marginBottom: 8, fontWeight: 600 }}>System Locked</Title>
+                <Title level={3} style={{ color: '#fff', marginBottom: 8, fontWeight: 600 }}>系统已锁定</Title>
                 <Text style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 32 }}>请输入系统密码以继续访问</Text>
 
                 <div style={{ width: '100%' }}>
                     <Input.Password
-                        placeholder="Password"
+                        placeholder="请输入访问密码"
                         size="large"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
@@ -132,7 +132,7 @@ const LockScreen = ({ onUnlock }) => {
                             boxShadow: '0 4px 6px -1px rgba(79, 70, 229, 0.4)'
                         }}
                     >
-                        {loading ? 'Verifying...' : 'Unlock System'}
+                        {loading ? '验证中...' : '解锁系统'}
                     </Button>
                 </div>
             </div>
